@@ -1,0 +1,71 @@
+server:
+  port: 5555
+  max-http-header-size: 50000
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json
+    min-response-size: 1024
+  undertow:
+    ioThreads: 15
+    workerThreads: 150
+    max-http-post-size: -1
+
+spring:
+  application:
+    name: gatewayservice
+  cloud:
+    inetutils:
+      ignoredInterfaces:
+        - docker0
+        - veth.*
+    config:
+      enabled: true
+      uri: http://configservice:8888
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: http://discoveryservice:8761/eureka/
+  server:
+    wait-time-in-ms-when-sync-empty: 3000
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 100000
+        timeout:
+          enabled: false
+
+zuul:
+  Semaphore:
+    Max-semaphores: 5000
+  ribbonIsolationStrategy: THREAD
+  ignored-headers: Access-Control-Allow-Credentials, Access-Control-Allow-Origin
+  sensitiveHeaders: Cookie,Set-Cookie
+  host:
+    connection-request-timeout-millis: 1200000
+    socket-timeout-millis: 1200000
+    connect-timeout-millis: 1200000
+  routes:
+    operationservice:
+      url: http://operationservice:9999
+
+ribbon:
+  ConnectTimeout: 1200000
+  ReadTimeout: 1200000
+
+#SLF4J
+logging:
+  level:
+    ROOT: ERROR
+  file:  /tmp/logs/application.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

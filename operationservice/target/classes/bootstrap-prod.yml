@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: operationservice
+  cloud:
+    config:
+      enabled: true
+      uri: http://configservice:8888
+  profiles:
+    active: prod

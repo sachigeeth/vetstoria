@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: gatewayservice
+
+server:
+  port: 5555
+  max-http-header-size: 50000
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json
+    min-response-size: 1024
+  undertow:
+    ioThreads: 15
+    workerThreads: 150
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    registerWithEureka: false
+    fetchRegistry: true
+    serviceUrl:
+        defaultZone: http://localhost:8761/eureka/
+
+zuul:
+  Semaphore:
+    Max-semaphores: 5000
+    ribbonIsolationStrategy: THREAD
+  ignored-headers: Access-Control-Allow-Credentials, Access-Control-Allow-Origin
+  sensitiveHeaders: Cookie,Set-Cookie
+  host:
+    connection-request-timeout-millis: 1200000
+
+hystrix:
+  Threadpool:
+    Default:
+      coreSize: 100
+      maximumSize: 400
+      allowMaximumSizeToDivergeFromCoreSize: true
+      maxQueueSize: -1
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 100000
+        timeout:
+          enabled: false
+
+ribbon:
+  ConnectTimeout: 1200000
+  ReadTimeout: 1200000
+
+#SLF4J
+logging:
+  level:
+    ROOT: INFO
+    org.springframework.web: INFO
+    com.enrico.microservices: INFO
+  file:  /tmp/logs/application.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

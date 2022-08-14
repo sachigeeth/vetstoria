@@ -1,0 +1,24 @@
+server:
+  port: 8761
+  max-http-header-size: 50000
+
+eureka:
+  client:
+    registerWithEureka: false
+    fetchRegistry: false
+  server:
+    waitTimeInMsWhenSyncEmpty: 0
+    enable-self-preservation: false
+  serviceUrl:
+    defaultZone: http://discoveryservice:8761
+
+#SLF4J
+logging:
+  level:
+    ROOT: INFO
+    org.springframework.web: INFO
+    com.enrico.microservices: INFO
+  file:  /tmp/logs/application.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

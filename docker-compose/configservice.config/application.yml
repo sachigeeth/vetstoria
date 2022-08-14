@@ -1,0 +1,25 @@
+server:
+   port: 8888
+   max-http-header-size: 50000
+
+spring:
+  application:
+      name: configservice
+  profiles:
+    active: native
+  cloud:
+     config:
+       server:
+           native:
+              searchLocations: classpath:config/,classpath:config/authservice
+
+#SLF4J
+logging:
+  level:
+    ROOT: INFO
+    org.springframework.web: INFO
+    com.enrico.microservices: INFO
+  file:  /tmp/logs/application.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

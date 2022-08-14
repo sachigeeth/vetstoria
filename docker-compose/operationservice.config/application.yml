@@ -1,0 +1,48 @@
+server:
+  port: 9999
+  max-http-header-size: 50000
+
+management:
+  security:
+    enabled: false
+
+auth-server:
+  url: http://operationservice:9999
+
+spring:
+  application:
+    name: operationservice
+  cloud:
+    config:
+      enabled: true
+      uri: http://configservice:8888
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 2kb
+      max-file-size: 200MB
+      max-request-size: 215MB
+
+#SLF4J
+logging:
+  level:
+    ROOT: INFO
+    org.springframework.web: INFO
+    com.enrico.microservices: INFO
+  file:  /tmp/logs/application.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+check-user-scopes: true
+
+eureka:
+  client:
+    healthcheck:
+      enabled: true
+    serviceUrl:
+      defaultZone: http://discoveryservice:8761/eureka/
+  server:
+    wait-time-in-ms-when-sync-empty: 3000

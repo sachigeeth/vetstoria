@@ -1,0 +1,141 @@
+version: '3.7'
+
+services:
+
+  configservice:
+    image: config-docker
+    build:
+      context: ../configservice
+      args:
+        time_zone: Asia/Colombo
+    container_name: configservice
+    hostname: configservice
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          memory: 500M
+    ports:
+      - 8888:8888
+    volumes:
+      - ./configservice/config:/tmp/config
+      - ./configservice/logs:/tmp/logs
+    links:
+      - discoveryservice
+    healthcheck:
+      test: ["CMD", "curl", "-I", "http://localhost:8888/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  discoveryservice:
+    image: discovery-docker
+    build:
+      context: ../discoveryservice
+      args:
+        time_zone: Asia/Colombo
+    container_name: discoveryservice
+    hostname: discoveryservice
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          memory: 500M
+    ports:
+      - 8761:8761
+    expose:
+      - 8761
+    volumes:
+      - ./discoveryservice/config:/tmp/config
+      - ./discoveryservice/logs:/tmp/logs
+    healthcheck:
+      test: ["CMD", "curl", "-I", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  gatewayservice:
+    image: gateway-docker
+    build:
+      context: ../gatewayservice
+      args:
+        time_zone: Asia/Colombo
+    container_name: gatewayservice
+    hostname: gatewayservice
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          memory: 1000M
+    restart: always
+    ports:
+      - 5555:5555
+    expose:
+      - 5555
+    volumes:
+      - ./gatewayservice/config:/tmp/config
+      - ./gatewayservice/logs:/tmp/logs
+    depends_on:
+      - configservice
+      - discoveryservice
+    links:
+      - configservice
+      - discoveryservice
+      - operationservice
+    healthcheck:
+      test: ["CMD", "curl", "-I", "http://localhost:5555/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  operationservice:
+    image: operation-docker
+    build:
+      context: ../operationservice
+      args:
+        time_zone: Asia/Colombo
+    container_name: operationservice
+    hostname: operationservice
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          memory: 3000M
+    ports:
+      - 9999:9999
+    expose:
+      - 9999
+    volumes:
+      - ./operationservice/config:/tmp/config
+      - ./operationservice/logs:/tmp/logs
+    depends_on:
+      - configservice
+    links:
+      - configservice
+      - discoveryservice
+    healthcheck:
+      test: ["CMD", "curl", "-I", "http://localhost:9999/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 2m
+  pg:
+    container_name: pg
+    hostname: pg
+    image: postgres
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=vetstoria

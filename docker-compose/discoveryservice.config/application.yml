@@ -1,0 +1,24 @@
+server:
+  port: 8761
+  max-http-header-size: 50000
+
+eureka:
+  instance:
+    hostname: discoveryservice
+    port: 8761
+  client:
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname}:${eureka.instance.port}/eureka/
+  server:
+    wait-time-in-ms-when-sync-empty: 3000
+
+#SLF4J
+logging:
+  level:
+    ROOT: INFO
+    org.springframework.web: INFO
+    com.enrico.microservices: INFO
+  file:  /tmp/logs/application.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
