@@ -4,6 +4,7 @@ import com.operation.entity.Appointment;
 import com.operation.entity.PetAppointmentMapping;
 import com.operation.entity.QAppointment;
 import com.operation.repository.AppointmentRepository;
+import com.operation.repository.PetAppointmentMappingRepository;
 import com.operation.service.AppointmentService;
 import com.operation.util.DateUtil;
 import com.operation.util.MasterDataStatus;
@@ -25,17 +26,28 @@ import java.util.Optional;
 public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final PetAppointmentMappingRepository petAppointmentMappingRepository;
     private final Logger logger = LoggerFactory.getLogger(AppointmentServiceImpl.class);
 
     @Autowired
-    public AppointmentServiceImpl(AppointmentRepository appointmentRepository) {
+    public AppointmentServiceImpl(AppointmentRepository appointmentRepository,
+                                  PetAppointmentMappingRepository petAppointmentMappingRepository) {
         this.appointmentRepository = appointmentRepository;
+        this.petAppointmentMappingRepository = petAppointmentMappingRepository;
     }
 
     @Override
     public ResponseEntity createAppointment(Appointment appointment) {
         ResponseEntity responseEntity;
-        this.appointmentRepository.save(appointment);
+        appointment = this.appointmentRepository.save(appointment);
+        for (PetAppointmentMapping appointmentMapping : appointment.getPetAppointmentMappings()) {
+            PetAppointmentMapping petAppointmentMapping = new PetAppointmentMapping();
+            petAppointmentMapping.setAppointmentId(appointment.getAppointmentId());
+            petAppointmentMapping.setPetId(appointmentMapping.getPetId());
+            petAppointmentMapping.setAppointmentTypeId(appointmentMapping.getAppointmentTypeId());
+            petAppointmentMapping.setStatus(appointment.getStatus());
+            this.petAppointmentMappingRepository.save(petAppointmentMapping);
+        }
         responseEntity = new ResponseEntity<>(appointment, HttpStatus.CREATED);
         return responseEntity;
     }
@@ -45,6 +57,22 @@ public class AppointmentServiceImpl implements AppointmentService {
         ResponseEntity<Appointment> responseEntity;
         Optional<Appointment> dbAppointment = this.appointmentRepository.findById(appointment.getAppointmentId());
         if (dbAppointment.isPresent()) {
+            for (PetAppointmentMapping appointmentMapping : dbAppointment.get().getPetAppointmentMappings()) {
+                Optional<PetAppointmentMapping> dbPetAppointmentMapping = this.petAppointmentMappingRepository.findById(appointmentMapping.getAppointmentId());
+                if (dbPetAppointmentMapping.isPresent()) {
+                    dbPetAppointmentMapping.get().setPetId(appointmentMapping.getPetId());
+                    dbPetAppointmentMapping.get().setAppointmentTypeId(appointmentMapping.getAppointmentTypeId());
+                    dbPetAppointmentMapping.get().setStatus(appointment.getStatus());
+                    this.petAppointmentMappingRepository.save(dbPetAppointmentMapping.get());
+                } else {
+                    PetAppointmentMapping petAppointmentMapping = new PetAppointmentMapping();
+                    petAppointmentMapping.setAppointmentId(appointment.getAppointmentId());
+                    petAppointmentMapping.setPetId(appointmentMapping.getPetId());
+                    petAppointmentMapping.setAppointmentTypeId(appointmentMapping.getAppointmentTypeId());
+                    petAppointmentMapping.setStatus(appointment.getStatus());
+                    this.petAppointmentMappingRepository.save(petAppointmentMapping);
+                }
+            }
             this.appointmentRepository.save(appointment);
             responseEntity = new ResponseEntity<>(appointment, HttpStatus.OK);
         } else {
@@ -73,7 +101,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     public List<Appointment> appointmentSearch(AppointmentVo appointmentVo) {
         List<Appointment> appointmentList = new ArrayList<>();
-        try{
+        try {
             QAppointment qAppointment = QAppointment.appointment;
             BooleanBuilder builder = new BooleanBuilder();
 
@@ -103,7 +131,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 builder.and(qAppointment.appointmentDate.before(appointmentToDate));
             }
             appointmentList = (List<Appointment>) this.appointmentRepository.findAll(builder);
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.error("Appointment Search Error", e);
         }
         return appointmentList;

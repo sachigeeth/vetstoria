@@ -12,7 +12,7 @@ import javax.persistence.*;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "pet_appoinment_mapping", schema = "operation")
+@Table(name = "pet_appointment_mapping", schema = "operation")
 public class PetAppointmentMapping extends SharedModel {
     private Integer petAppointmentMappingId;
     private Integer appointmentId;
