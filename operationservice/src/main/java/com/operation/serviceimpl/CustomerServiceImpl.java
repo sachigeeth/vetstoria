@@ -4,6 +4,7 @@ import com.operation.entity.Customer;
 import com.operation.entity.Pet;
 import com.operation.entity.QCustomer;
 import com.operation.repository.CustomerRepository;
+import com.operation.repository.PetRepository;
 import com.operation.service.CustomerService;
 import com.operation.util.DateUtil;
 import com.operation.util.MasterDataStatus;
@@ -27,11 +28,14 @@ import java.util.Optional;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final PetRepository petRepository;
     private final Logger logger = LoggerFactory.getLogger(CustomerServiceImpl.class);
 
     @Autowired
-    public CustomerServiceImpl(CustomerRepository customerRepository) {
+    public CustomerServiceImpl(CustomerRepository customerRepository,
+                               PetRepository petRepository) {
         this.customerRepository = customerRepository;
+        this.petRepository = petRepository;
     }
 
     @Override
@@ -41,7 +45,17 @@ public class CustomerServiceImpl implements CustomerService {
         if (customer.getAddressBook() != null) {
             customer.getAddressBook().setStatus(MasterDataStatus.APPROVED.getStatusSeq());
         }
-        this.customerRepository.save(customer);
+        customer = this.customerRepository.save(customer);
+        for (Pet pet: customer.getPets()) {
+            Pet p = new Pet();
+            p.setCustomerId(customer.getCustomerId());
+            p.setName(pet.getName());
+            p.setPetTypeId(pet.getPetTypeId());
+            p.setPetBreedId(pet.getPetBreedId());
+            p.setDob(pet.getDob());
+            p.setStatus(customer.getStatus());
+            this.petRepository.save(p);
+        }
         responseEntity = new ResponseEntity<>(customer, HttpStatus.CREATED);
         return responseEntity;
     }
@@ -52,6 +66,26 @@ public class CustomerServiceImpl implements CustomerService {
         ResponseEntity<Customer> responseEntity;
         Optional<Customer> dbCustomer = this.customerRepository.findById(customer.getCustomerId());
         if (dbCustomer.isPresent()) {
+            for (Pet pet: customer.getPets()) {
+                Optional<Pet> dbPet = this.petRepository.findById(pet.getPetId());
+                if(dbPet.isPresent()){
+                    dbPet.get().setName(pet.getName());
+                    dbPet.get().setPetTypeId(pet.getPetTypeId());
+                    dbPet.get().setPetBreedId(pet.getPetBreedId());
+                    dbPet.get().setDob(pet.getDob());
+                    dbPet.get().setStatus(customer.getStatus());
+                    this.petRepository.save(dbPet.get());
+                }else {
+                    Pet p = new Pet();
+                    p.setCustomerId(customer.getCustomerId());
+                    p.setName(pet.getName());
+                    p.setPetTypeId(pet.getPetTypeId());
+                    p.setPetBreedId(pet.getPetBreedId());
+                    p.setDob(pet.getDob());
+                    p.setStatus(customer.getStatus());
+                    this.petRepository.save(p);
+                }
+            }
             this.customerRepository.save(customer);
             responseEntity = new ResponseEntity<>(customer, HttpStatus.OK);
         } else {
